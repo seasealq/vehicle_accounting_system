@@ -1,0 +1,25 @@
+# Виртуальное окружение
+.venv/
+venv/
+
+# Конфиденциальная конфигурация
+.env
+.env.*
+!.env.example
+
+# Файлы Python
+__pycache__/
+*.py[cod]
+
+# Результаты тестирования
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Журналы
+*.log
+logs/
+
+# Системные файлы
+.DS_Store
+Thumbs.db

@@ -1,0 +1,2 @@
+python-dotenv==1.2.2
+pytest==9.0.2
