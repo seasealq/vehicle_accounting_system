@@ -1,0 +1,31 @@
+flowchart LR
+  client[Пользователь / будущий клиент]
+  env[Окружение и .env]
+  subgraph TB01[TB-01: клиент → приложение]
+    entry[CLI / будущий интерфейс<br/>Реализовано частично]
+    validation[Validation<br/>реализовано]
+    auth[Authentication<br/>проектируется]
+    access[Authorization<br/>реализовано]
+    service[Services<br/>демо-операции]
+  end
+  subgraph TB02[TB-02: приложение → хранилище]
+    repository[Repository<br/>проектируется]
+    storage[БД / хранилище<br/>не реализовано]
+  end
+  subgraph TB03[TB-03: приложение → аудит]
+    audit[Audit logger<br/>реализовано]
+    logstore[Защищённое хранение<br/>проектируется]
+  end
+  config[Configuration<br/>реализовано]
+  client -->|недоверенный запрос| entry
+  env -->|непроверенные значения| config
+  entry --> validation --> auth --> access --> service
+  config --> entry
+  service --> repository --> storage
+  service -->|разрешение / отказ / ошибка| audit --> logstore
+  classDef implemented fill:#d9ead3,stroke:#38761d,color:#111;
+  classDef planned fill:#fce5cd,stroke:#b45f06,color:#111;
+  classDef partial fill:#d9eaf7,stroke:#3d85c6,color:#111;
+  class validation,access,audit,config implemented;
+  class auth,repository,storage,logstore planned;
+  class entry,service partial;

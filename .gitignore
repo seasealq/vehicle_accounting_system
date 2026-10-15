@@ -22,4 +22,11 @@ logs/
 
 # Системные файлы
 .DS_Store
+*.aux
+*.out
+*.toc
+*.synctex.gz
 Thumbs.db
+
+# Локальные инструкции для ручной демонстрации
+LAB4_STEPS.md

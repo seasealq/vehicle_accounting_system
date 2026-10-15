@@ -1,0 +1,52 @@
+\documentclass{article}
+\usepackage[paperwidth=34cm,paperheight=12cm,margin=0.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setmainfont{STIX Two Text}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\begin{document}
+\pagestyle{empty}
+\begin{center}
+\begin{tikzpicture}[
+  font=\normalsize,
+  box/.style={draw,rounded corners,align=center,text width=2.7cm,minimum height=1.05cm,inner sep=5pt},
+  done/.style={box,fill=green!13,draw=green!45!black},
+  planned/.style={box,fill=orange!16,draw=orange!70!black},
+  partial/.style={box,fill=blue!10,draw=blue!65!black},
+  arrow/.style={-{Latex[length=2mm]},thick},
+  boundary/.style={draw,dashed,rounded corners,inner sep=9pt,fill=none}
+]
+\node[box] (client) {Пользователь / будущий клиент};
+\node[partial,right=1.0cm of client] (entry) {CLI и будущий интерфейс\\ввод не доверенный};
+\node[done,right=1.0cm of entry] (validation) {Validation\\проверка полей};
+\node[planned,below=1.0cm of validation] (authentication) {Authentication\\проверка личности};
+\node[done,right=1.0cm of validation] (authorization) {Authorization\\роль и объект};
+\node[partial,right=1.0cm of authorization] (service) {Services\\действия предметной области};
+\node[planned,right=1.0cm of service] (repository) {Repository\\контролируемый доступ};
+\node[planned,right=1.0cm of repository] (storage) {Хранилище\\не реализовано};
+\node[done,below=1.25cm of service] (audit) {Audit logger\\без секрета и маршрута};
+\node[planned,right=1.0cm of audit] (logstore) {Защищённое\\хранение журнала};
+\node[done,below=1.25cm of entry] (config) {Configuration\\env и .env};
+
+\draw[arrow] (client) -- node[above,pos=0.5]{TB-01} (entry);
+\draw[arrow] (entry) -- (validation);
+\draw[arrow] (validation) -- (authorization);
+\draw[arrow] (validation) -- (authentication);
+\draw[arrow] (authentication) -| (authorization);
+\draw[arrow] (authorization) -- (service);
+\draw[arrow] (service) -- node[above]{TB-02} (repository);
+\draw[arrow] (repository) -- (storage);
+\draw[arrow] (service) -- node[right,align=left]{успех / отказ} (audit);
+\draw[arrow] (audit) -- node[below]{TB-03} (logstore);
+\draw[arrow] (config) -- (entry);
+\node[boundary,fit=(entry)(validation)(authentication)(authorization)(service),label={[font=\small]above:Граница клиента и приложения}] {};
+\node[boundary,fit=(repository)(storage),label={[font=\small]above:Граница приложения и данных}] {};
+\node[boundary,fit=(logstore),label={[font=\small]below:Граница приложения и аудита}] {};
+\node[draw,fill=green!13,anchor=north west] at (0,-4.5) {Реализовано в прототипе};
+\node[draw,fill=blue!10,anchor=north west] at (6,-4.5) {Реализовано частично};
+\node[draw,fill=orange!16,anchor=north west] at (12,-4.5) {Спроектировано};
+\end{tikzpicture}
+\end{center}
+\end{document}
