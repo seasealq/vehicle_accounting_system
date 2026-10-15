@@ -1,0 +1,7 @@
+{
+  "title": "Вложение к обращению",
+  "description": "Проверяется отклонение пути вместо логического ключа вложения.",
+  "category": "other",
+  "priority": 1,
+  "attachment_key": "../secret"
+}

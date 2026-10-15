@@ -1,0 +1,7 @@
+{
+  "title": "Фото состояния ТС",
+  "description": "К обращению приложен логический тип фотографии транспортного средства.",
+  "category": "software",
+  "priority": 2,
+  "attachment_key": "vehicle_photo"
+}

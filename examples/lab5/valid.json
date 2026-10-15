@@ -1,0 +1,8 @@
+{
+  "title": "Ошибка сетевого сервиса",
+  "description": "При проверке состояния транспортного средства возникла ошибка.",
+  "category": "network",
+  "priority": 3,
+  "reporter_ip": "192.0.2.10",
+  "attachment_key": "log"
+}
