@@ -41,13 +41,13 @@
 \tableofcontents
 \clearpage
 \section{Тема и цель работы}
-Цель работы — разработать и проверить централизованную безопасную проверку входных данных до передачи в бизнес-логику. Реализация продолжает проект v0.4 и сохраняет предметные валидаторы транспортных средств.
+Цель работы — разработать и проверить централизованную безопасную проверку входных данных до передачи в бизнес-логику согласно требованиям методических указаний \cite{method5}. Реализация продолжает проект v0.4 и сохраняет предметные валидаторы транспортных средств.
 
 \section{Индивидуальный вариант и проект}
 Вариант 19 требует нового логического типа вложения. Добавлен точный allowlist-ключ \texttt{vehicle\_photo} для обозначения фотографии транспортного средства. Это идентификатор типа, а не путь и не имя файла. Загрузка и хранение изображений не входят в реализацию.
 
 \section{Спецификация валидации}
-Вход — UTF-8 JSON bytes размером не более 8192 байт. Обязательные поля: \texttt{title} (5–100 символов), \texttt{description} (20–2000), \texttt{category} (network/software/access/other), \texttt{priority} (строгое целое 1–5). Необязательны \texttt{reporter\_ip} (IPv4/IPv6/null) и \texttt{attachment\_key} (log/screenshot/report/vehicle\_photo/null). Неизвестные и повторные ключи запрещены. Текст нормализуется NFC, внешние пробелы удаляются; CRLF описания нормализуется в LF. Управляющие символы запрещены, кроме перевода строки в описании.
+Вход — UTF-8 JSON bytes размером не более 8192 байт. Модуль \texttt{json} предоставляет средства разбора и сериализации, но приложение дополнительно ограничивает размер и проверяет структуру недоверенных данных \cite{python-json,owasp-input}. Обязательные поля: \texttt{title} (5–100 символов), \texttt{description} (20–2000), \texttt{category} (network/software/access/other), \texttt{priority} (строгое целое 1–5). Необязательны \texttt{reporter\_ip} (IPv4/IPv6/null), для проверки формата используется модуль \texttt{ipaddress} \cite{python-ipaddress} и \texttt{attachment\_key} (log/screenshot/report/vehicle\_photo/null). Неизвестные и повторные ключи запрещены. Текст нормализуется NFC, внешние пробелы удаляются; CRLF описания нормализуется в LF. Для Unicode используется функция нормализации стандартного модуля \texttt{unicodedata}; нормализация не заменяет валидацию и контекстное кодирование \cite{python-unicode,owasp-input}. Управляющие символы запрещены, кроме перевода строки в описании.
 
 HTML-подобный ввод сохраняется как текст. При выводе в HTML требуется отдельное контекстное экранирование. NFC объединяет канонически эквивалентное представление, но не подменяет символы по совместимости, как NFKC.
 
@@ -159,7 +159,7 @@ vehicle\_photo & Принято & Тест пройден & Пройдено\\
 Первый сбор тестов выявил два несвязанных вопроса: системный python3 не соответствовал версии Python проекта, а вспомогательная проверка отсутствия утечки некорректно сравнивала пустую строку. Использован проектный virtualenv и исправлено тестовое утверждение. После этого добавлены проверки граничных значений, глубокой вложенности и фактической CLI-точки. Ошибок реализации после повторной проверки не осталось; причины уязвимого поведения в исходном проекте этим тестированием не устанавливались.
 
 \section{Анализ Path Traversal и Command Injection}
-Пользовательское значение вложения проверяется сравнением с фиксированным allowlist и не используется в файловых операциях. В приложении не найдено \texttt{os.system}, \texttt{subprocess}, \texttt{Popen} или \texttt{shell=True}. В тесте интеграции безопасный \texttt{subprocess.run} запускает CLI с постоянными аргументами и без оболочки. Модуль не запускает системные команды.
+Пользовательское значение вложения проверяется сравнением с фиксированным allowlist и не используется в файловых операциях. Такой подход исключает использование значения как пути; OWASP описывает Path Traversal как выход за пределы разрешённой области при обработке сегментов пути \cite{owasp-path}. Проверка данных и ограничение пользовательского ввода до передачи в последующую обработку соответствуют рекомендациям OWASP \cite{owasp-input,owasp-command}. В приложении не найдено \texttt{os.system}, \texttt{subprocess}, \texttt{Popen} или \texttt{shell=True}. В тесте интеграции безопасный \texttt{subprocess.run} запускает CLI с постоянными аргументами и без оболочки. Модуль не запускает системные команды.
 
 \section{Соответствие требованиям}
 \begin{longtable}{p{5cm}p{5cm}p{4cm}}
@@ -208,10 +208,16 @@ CLI локальный и не является сетевым API; аутент
 \section{Вывод}
 Создан отдельный валидатор JSON и CLI, сохраняющие прежнюю предметную валидацию автопарка. Контракт формирует неизменяемую модель, а вариант 19 расширяет список логических типов вложений ключом \texttt{vehicle\_photo}. Тесты подтверждают только проверенные свойства прототипа; они не доказывают безопасность будущего веб-интерфейса или файлового хранилища.
 
-\section{Источники}
-\begin{enumerate}
-\item Практическая работа №5 «Безопасная обработка пользовательского ввода», предоставленная методичка, 2026.
-\item Документы проекта v0.2–v0.4: требования, модель угроз, реестр рисков и защищённая архитектура.
-\item Python 3: стандартные модули \texttt{json}, \texttt{unicodedata}, \texttt{ipaddress}.
-\end{enumerate}
+\clearpage
+\renewcommand{\refname}{Список использованных источников}
+\addcontentsline{toc}{section}{Список использованных источников}
+\begin{thebibliography}{99}
+\bibitem{method5} Методические указания «Практическая работа № 5. Безопасная обработка пользовательского ввода».
+\bibitem{python-json} Python Software Foundation. json — JSON encoder and decoder. Python 3.12 Documentation [Электронный ресурс]. URL: \url{https://docs.python.org/3.12/library/json.html} (дата обращения: 15.10.2026).
+\bibitem{python-unicode} Python Software Foundation. unicodedata — Unicode Database. Python 3.12 Documentation [Электронный ресурс]. URL: \url{https://docs.python.org/3.12/library/unicodedata.html} (дата обращения: 15.10.2026).
+\bibitem{python-ipaddress} Python Software Foundation. ipaddress — IPv4/IPv6 manipulation library. Python 3.12 Documentation [Электронный ресурс]. URL: \url{https://docs.python.org/3.12/library/ipaddress.html} (дата обращения: 15.10.2026).
+\bibitem{owasp-input} \mbox{OWASP} Foundation. Input Validation Cheat Sheet [Электронный ресурс]. URL: \url{https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html} (дата обращения: 15.10.2026).
+\bibitem{owasp-path} \mbox{OWASP} Foundation. Path Traversal [Электронный ресурс]. URL: \url{https://community.owasp.org/attacks/Path_Traversal} (дата обращения: 15.10.2026).
+\bibitem{owasp-command} \mbox{OWASP} Foundation. OS Command Injection Defense Cheat Sheet [Электронный ресурс]. URL: \url{https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html} (дата обращения: 15.10.2026).
+\end{thebibliography}
 \end{document}
