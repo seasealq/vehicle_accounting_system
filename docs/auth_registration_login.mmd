@@ -1,0 +1,9 @@
+flowchart LR
+  C[Клиент: недоверенные login/password] -->|TB-A: граница процесса| V[AuthService: типы, casefold, формат логина, NFC и парольная политика]
+  V -->|параметризованный запрос| U[(SQLite users)]
+  V -->|регистрация: случайная соль, PBKDF2-HMAC-SHA-256| U
+  U -->|salt, rounds, password_hash| V
+  V -->|вход: KDF + compare_digest| V
+  V -->|ошибка: обновить failures / blocked_until| U
+  V -->|успех: случайный token, сохранить SHA-256| S[(SQLite sessions)]
+  V -->|токен однократно клиенту| C

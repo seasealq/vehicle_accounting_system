@@ -1,0 +1,10 @@
+flowchart LR
+  C[Предъявленный непрозрачный токен] -->|TB-A| V[AuthService.resolve]
+  V --> H[Проверка формата и SHA-256]
+  H --> S[(SQLite sessions: token_hash, user_id, created, last_seen)]
+  S --> U[(SQLite users: active)]
+  U --> T{Активен и сроки не истекли?}
+  T -->|да| L[Обновить last_seen]
+  L --> I[Подтверждённый серверный user_id]
+  T -->|нет| R[Отказ; истёкшую запись удалить]
+  I --> A[Будущий слой Authorization; в v0.7 не интегрирован]
