@@ -1,0 +1,16 @@
+flowchart LR
+    U[Недоверенный JSON и байты вложения] --> V[validate_request: ValidatedRequest]
+    V --> S[RequestService]
+    S -->|фиксированные SQL + параметры ?| R[RequestRepository]
+    R --> DB[(SQLite requests)]
+    S -->|тип из allowlist + байты| F[FileStore]
+    F -->|случайный 128-битный ID| P[Каталог с правами 0700]
+    R -. при ошибке INSERT .-> C[Компенсация: FileStore.remove]
+    F -->|O_EXCL, O_NOFOLLOW, dir_fd| P
+    F -->|fstat + ограниченное чтение| P
+
+    TB1{{TB-01: граница проверки входа}}
+    TB2{{TB-02: граница доверенного локального хранилища}}
+    U --- TB1
+    V --- TB1
+    P --- TB2

@@ -31,3 +31,11 @@ Thumbs.db
 # Локальные инструкции для ручной демонстрации
 LAB4_STEPS.md
 LAB5_STEPS.md
+LAB6_STEPS.md
+
+# Локальные данные демонстрации и приватные вложения
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+private_data/
