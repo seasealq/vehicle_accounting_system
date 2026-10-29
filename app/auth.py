@@ -57,7 +57,11 @@ class AuthService:
                     recovery_hash BLOB NOT NULL,
                     failures INTEGER NOT NULL DEFAULT 0 CHECK(failures >= 0),
                     blocked_until REAL,
-                    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0, 1))
+                    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0, 1)),
+                    role TEXT NOT NULL DEFAULT 'user'
+                        CHECK(role IN ('user', 'operator', 'admin', 'specialist')),
+                    department_id TEXT
+                        CHECK(department_id IS NULL OR length(trim(department_id)) > 0)
                 );
                 CREATE TABLE IF NOT EXISTS sessions (
                     token_hash BLOB PRIMARY KEY,
@@ -67,6 +71,19 @@ class AuthService:
                 );
                 """
             )
+            # Аддитивная миграция существующей v0.7 БД: хеши, recovery-коды,
+            # параметры KDF и строки сеансов не пересоздаются.
+            columns = {row[1] for row in db.execute("PRAGMA table_info(users)")}
+            if "role" not in columns:
+                db.execute(
+                    "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user' "
+                    "CHECK(role IN ('user', 'operator', 'admin', 'specialist'))"
+                )
+            if "department_id" not in columns:
+                db.execute(
+                    "ALTER TABLE users ADD COLUMN department_id TEXT "
+                    "CHECK(department_id IS NULL OR length(trim(department_id)) > 0)"
+                )
         if not existed:
             try:
                 self.database.chmod(0o600)

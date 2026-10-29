@@ -1,0 +1,16 @@
+flowchart TD
+    C[Токен и request_id] --> A[AuthService.resolve]
+    A -->|подтверждённый user_id| B[BEGIN IMMEDIATE]
+    A -->|нет сеанса| D[Отказ без изменения заявки]
+    B --> U[(SQLite users)]
+    B --> Q[(SQLite requests)]
+    U --> R{active=1 и role=specialist?}
+    R -->|нет| D
+    R -->|да| DEP{department_id специалиста непустой?}
+    DEP -->|нет| D
+    DEP -->|да| ROW{Заявка существует и status=closed?}
+    ROW -->|нет| D
+    ROW -->|да| EQ{department_id заявки совпадает?}
+    EQ -->|нет или NULL| D
+    EQ -->|да| UPD[UPDATE status: closed → new]
+    UPD --> COMMIT[COMMIT]

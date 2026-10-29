@@ -26,13 +26,19 @@ class RequestRepository:
         self.database = Path(database)
 
     def connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.database, timeout=5)
+        connection = sqlite3.connect(self.database, timeout=5)
+        connection.execute("PRAGMA foreign_keys = ON")
+        return connection
 
     def initialize(self) -> None:
         self.database.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         with closing(self.connect()) as connection, connection:
+            has_users_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'"
+            ).fetchone() is not None
+            owner_column = "INTEGER REFERENCES users(id)" if has_users_table else "INTEGER"
             connection.execute(
-                """
+                f"""
                 CREATE TABLE IF NOT EXISTS requests (
                     id INTEGER PRIMARY KEY,
                     title TEXT NOT NULL CHECK(length(title) BETWEEN 5 AND 100),
@@ -45,6 +51,11 @@ class RequestRepository:
                         CHECK(attachment_key IS NULL OR attachment_key IN
                               ('log', 'report', 'screenshot', 'vehicle_photo')),
                     file_id TEXT UNIQUE,
+                    owner_id {owner_column},
+                    status TEXT NOT NULL DEFAULT 'legacy'
+                        CHECK(status IN ('new', 'closed', 'legacy')),
+                    department_id TEXT
+                        CHECK(department_id IS NULL OR length(trim(department_id)) > 0),
                     CHECK(
                         (attachment_key IS NULL AND file_id IS NULL)
                         OR
@@ -55,6 +66,17 @@ class RequestRepository:
                 )
                 """
             )
+            # Сохраняем прежние записи: для них владелец и подразделение
+            # остаются NULL, а состояние помечается как legacy.
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
+            additions = {
+                "owner_id": owner_column,
+                "status": "TEXT NOT NULL DEFAULT 'legacy' CHECK(status IN ('new', 'closed', 'legacy'))",
+                "department_id": "TEXT CHECK(department_id IS NULL OR length(trim(department_id)) > 0)",
+            }
+            for name, declaration in additions.items():
+                if name not in columns:
+                    connection.execute(f"ALTER TABLE requests ADD COLUMN {name} {declaration}")
 
     @staticmethod
     def _validate_request(request: ValidatedRequest) -> None:
@@ -85,8 +107,8 @@ class RequestRepository:
         with closing(self.connect()) as connection, connection:
             cursor = connection.execute(
                 """INSERT INTO requests
-                   (title, description, category, priority, reporter_ip, attachment_key, file_id)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (title, description, category, priority, reporter_ip, attachment_key, file_id, status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'legacy')""",
                 (request.title, request.description, request.category, request.priority,
                  request.reporter_ip, request.attachment_key, file_id),
             )

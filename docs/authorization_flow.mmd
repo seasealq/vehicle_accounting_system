@@ -1,0 +1,13 @@
+flowchart LR
+    C[Недоверенный запрос: token, request_id, ValidatedRequest] --> A[AuthService.resolve(token)]
+    A -->|подтверждённый user_id| T{{Граница доверия: сервис}}
+    A -->|None| D[Отказ]
+    T --> DB[(Общая SQLite: users, sessions, requests)]
+    DB --> R[Актуальные active, role, department_id]
+    R --> P{Разрешение роли}
+    P -->|нет / неизвестно| D
+    P -->|request.read| O{owner_id = user_id или operator}
+    P -->|request.close / role.assign / request.reopen| O
+    O -->|нет| D
+    O -->|да, в BEGIN IMMEDIATE| X[Выполнить параметризованную операцию]
+    X --> DB
